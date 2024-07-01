@@ -11,7 +11,25 @@ def introduce(name):
 
 
 
+"""
+  Call your function from Example 1 three times with different kinds of arguments: 
+  a value, a variable, and an expression. Identify which kind of argument is which. 
+"""
+
+# A value argument
+introduce("Adedoyin Emmanuel") # Calling the function with a value argument
 
 
-# Adedoyin Emmanuel is the argument 
-introduce("Adedoyin Emmanuel") 
+
+# A variable argument
+myName = "Adedoyin Emmanuel"
+
+introduce(myName) # Calling the function with a variable argument
+
+
+
+# An expression argument
+firstName = "Adedoyin"
+lastName = "Emmanuel"
+
+introduce(firstName + " " + lastName) # Calling the function with an expression argument
