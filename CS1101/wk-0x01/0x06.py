@@ -86,7 +86,7 @@ print("Online Store\n")
 print("-" * 25)
 
 
-print(f"Product{total_items} \t \t \t Price")
+print(f"Product({total_items}) \t \t \t Price")
 
 print(f"Item 1 \t \t \t \t ${calculate_price(item1)}")
 
