@@ -1,4 +1,4 @@
-# Uopeople CS Assignment 🎖️
+# Uopeople CS Assignments 🎖️
 
 This repo contains the CS Assignment for BSc in Computer Science at UoPeople. Little tip. If you're a **High School** student and you're looking for a university where you can balance your school life with work, relationship and other good stuff, UoPeople is the right place for you. Visit <https://uopeople.edu>
 
