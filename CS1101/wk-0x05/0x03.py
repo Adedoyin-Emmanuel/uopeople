@@ -7,3 +7,12 @@
 """
 
 
+
+text = "Ability is a poor man's wealth"
+
+
+# Okay, the find method is case-sensitive. Hence returns -1 (Not Found)
+print(text.find('W')) 
+
+# Okay, the find method is case-sensitive. Hence returns 24 (The correct index of 'w')
+print(text.find('w'))
