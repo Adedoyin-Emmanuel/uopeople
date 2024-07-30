@@ -16,3 +16,9 @@ print(text.find('W'))
 
 # Okay, the find method is case-sensitive. Hence returns 24 (The correct index of 'w')
 print(text.find('w'))
+
+
+numbers =  [1,2,3]
+
+
+print(numbers.sort())
