@@ -1,0 +1,4 @@
+red: apple, cherry
+yellow: banana, mango
+black: grapes
+blue: blueberry
