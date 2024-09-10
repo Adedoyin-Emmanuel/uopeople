@@ -2,7 +2,7 @@
 
 This repo contains my CS Assignments for BSc in Computer Science at UoPeople. Little tip. If you're a **High School** student and you're looking for a university where you can balance your school life with work, relationship and other good stuff, UoPeople is the right place for you. Visit <https://uopeople.edu>
 
-Oh dear. I'm now doing **CS1102** and I will be writing a lot of **Java**. I really wished it was **C#**. But hey, I'm not complaining. I'm learning a lot of stuff. This should push me to take my **DSA** course in **Java** and try implement them in **C#**.
+Oh dear. I'm now doing **CS1102** and I will be writing a lot of **Java**. I really wished it was **C#**. But hey, I'm not complaining. I'm learning a lot of stuff. This should push me to take my **DSA** course in **Java** and try implementing them in **C#**.
 
 ## Resources 👜
 
