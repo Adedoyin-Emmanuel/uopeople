@@ -1,6 +1,5 @@
-package com.gui;
-
-import javafx.geometry.Insets;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.beans.property.*;
@@ -9,9 +8,11 @@ public class GUI {
     private StudentManager studentManager;
     private VBox layout;
     private TableView<Student> studentTable;
-    
+    private ObservableList<Course> courses;
+
     public GUI() {
         studentManager = new StudentManager();
+        courses = FXCollections.observableArrayList();
         layout = new VBox(10);
         layout.setPadding(new Insets(10));
         createComponents();
@@ -52,8 +53,30 @@ public class GUI {
             }
         });
 
+        // Course enrollment components
+        ComboBox<Student> studentComboBox = new ComboBox<>(studentTable.getItems());
+        ComboBox<Course> courseComboBox = new ComboBox<>(courses);
+        Button enrollButton = new Button("Enroll Student");
+
+        enrollButton.setOnAction(event -> {
+            Student selectedStudent = studentComboBox.getValue();
+            Course selectedCourse = courseComboBox.getValue();
+            if (selectedStudent != null && selectedCourse != null) {
+                studentManager.enrollStudentInCourse(selectedStudent, selectedCourse);
+                showAlert("Student enrolled in course successfully!");
+            } else {
+                showAlert("Please select a student and a course to enroll.");
+            }
+        });
+
         // Layout organization
-        layout.getChildren().addAll(new Label("Name:"), nameField, new Label("ID:"), idField, addButton, studentTable);
+        layout.getChildren().addAll(
+            new Label("Name:"), nameField,
+            new Label("ID:"), idField,
+            addButton, studentTable,
+            new Label("Enroll Student in Course:"),
+            studentComboBox, courseComboBox, enrollButton
+        );
     }
 
     private void showAlert(String message) {
