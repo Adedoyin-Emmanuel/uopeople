@@ -9,7 +9,6 @@ public class Course {
         this.courseId = courseId;
     }
 
-    // Getters and setters
     public String getCourseName() {
         return courseName;
     }
