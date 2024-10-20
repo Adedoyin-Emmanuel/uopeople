@@ -1,4 +1,5 @@
 package com.gui;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,5 +26,13 @@ public class StudentManager {
 
     public List<Course> getCourses() {
         return courses;
+    }
+
+    public void enrollStudentInCourse(Student student, Course course) {
+        student.enrollInCourse(course);
+    }
+
+    public void assignGrade(Student student, String grade) {
+        student.assignGrade(grade);
     }
 }
