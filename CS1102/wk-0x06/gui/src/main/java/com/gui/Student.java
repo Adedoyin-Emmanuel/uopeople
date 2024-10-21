@@ -39,4 +39,13 @@ public class Student {
     public void assignGrade(String grade) {
         grades.add(grade);
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

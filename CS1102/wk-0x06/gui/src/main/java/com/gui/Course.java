@@ -16,4 +16,9 @@ public class Course {
     public String getCourseId() {
         return courseId;
     }
+
+    @Override
+    public String toString() {
+        return courseName;
+    }
 }
