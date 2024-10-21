@@ -153,6 +153,18 @@ public class GUI {
         TextField courseIdField = new TextField();
         Button addCourseButton = new Button("Add Course");
 
+        TableView<Course> courseTable = new TableView<>();
+        TableColumn<Course, String> courseNameColumn = new TableColumn<>("Course Name");
+        TableColumn<Course, String> courseIdColumn = new TableColumn<>("Course ID");
+
+        courseNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCourseName()));
+        courseIdColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCourseId()));
+
+
+        courseTable.getColumns().addAll(courseNameColumn, courseIdColumn);
+        courseTable.setItems(courseObservableList);
+        
+
         addCourseButton.setOnAction(event -> {
             String courseName = courseNameField.getText();
             String courseId = courseIdField.getText();
@@ -167,7 +179,7 @@ public class GUI {
             }
         });
 
-        courseLayout.getChildren().addAll(instructionLabel, new Label("Course Name:"), courseNameField, new Label("Course ID:"), courseIdField, addCourseButton);
+        courseLayout.getChildren().addAll(instructionLabel, new Label("Course Name:"), courseNameField, new Label("Course ID:"), courseIdField, addCourseButton, courseTable);
 
         return courseLayout;
     }
