@@ -1,6 +1,8 @@
 package packages;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class Student {
@@ -17,6 +19,8 @@ public class Student {
     public String getName() {
         return name;
     }
+
+ 
 
     public void setName(String name) {
         this.name = name;
@@ -46,4 +50,7 @@ public class Student {
     public Map<Course, Double> getEnrolledCourses() {
         return new HashMap<>(enrolledCourses);
     }
+
+ 
+    
 }
