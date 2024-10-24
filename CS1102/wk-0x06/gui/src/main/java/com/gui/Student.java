@@ -2,21 +2,18 @@ package com.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
 
 public class Student {
     private String name;
     private String id;
-    private Map<Course, String> enrolledCourses;
-    private List<String> grades;
+    private List<Course> enrolledCourses;
+    private int grades;
 
     public Student(String name, String id) {
         this.name = name;
         this.id = id;
-        this.enrolledCourses = new HashMap<>();
-        this.grades = new ArrayList<>();
+        this.enrolledCourses = new ArrayList<>();
+        this.grades = 0;
     }
 
     public String getName() {
@@ -27,25 +24,20 @@ public class Student {
         return id;
     }
 
-    public Map<Course, String> getEnrolledCourses() {
-        return new HashMap<>(enrolledCourses);
+    public List<Course> getEnrolledCourses() {
+        return enrolledCourses;
     }
 
-    public List<String> getGrades() {
-        return grades;
+    public int getGrades() {
+        return this.grades;
     }
 
     public void enrollInCourse(Course course) {
-        if (!enrolledCourses.containsKey(course)) {
-            enrolledCourses.put(course, null);
-        }
+        enrolledCourses.add(course);
     }
 
-
-    public void assignGrade(Course course, String grade) {
-        if (enrolledCourses.containsKey(course)) {
-            enrolledCourses.put(course, grade);
-        }
+    public void assignGrade(int grade) {
+        this.grades = grade;
     }
 
     public void setName(String name) {

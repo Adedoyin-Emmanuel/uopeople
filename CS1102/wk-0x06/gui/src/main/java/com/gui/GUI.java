@@ -1,5 +1,4 @@
 package com.gui;
-
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -10,7 +9,8 @@ import javafx.collections.ObservableList;
 public class GUI {
     private StudentManager studentManager;
     private ObservableList<Student> studentObservableList;  
-    private ObservableList<Course> courseObservableList;    
+    private ObservableList<Course> courseObservableList;
+    private TableView<Student> studentTable; 
 
     private CustomAlert alert;
 
@@ -40,8 +40,7 @@ public class GUI {
         return tabPane;
     }
 
-
-     private VBox createStudentManagementTab() {
+    private VBox createStudentManagementTab() {
 
         VBox studentLayout = new VBox(10);
         studentLayout.setPadding(new Insets(10));
@@ -54,14 +53,18 @@ public class GUI {
         Button addButton = new Button("Add Student");
 
         
-        TableView<Student> studentTable = new TableView<>();
+        studentTable = new TableView<>();
         TableColumn<Student, String> nameColumn = new TableColumn<>("Name");
         TableColumn<Student, String> idColumn = new TableColumn<>("ID");
+        TableColumn<Student, String> gradeColumn = new TableColumn<>("Grade");
 
         
         nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         idColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getId()));
-        studentTable.getColumns().addAll(nameColumn, idColumn);
+        gradeColumn.setCellValueFactory(
+                cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getGrades())));
+        
+        studentTable.getColumns().addAll(nameColumn, idColumn, gradeColumn);
         studentTable.setItems(studentObservableList);
             
 
@@ -95,8 +98,6 @@ public class GUI {
     }
 
 
-
-
     private VBox createCourseRegistrationTab() {
         VBox enrollmentLayout = new VBox(10);
         enrollmentLayout.setPadding(new Insets(10));
@@ -127,26 +128,29 @@ public class GUI {
         gradeLayout.setPadding(new Insets(10));
 
         Label instructionLabel = new Label("Assign grades to students. Select a student and enter their grade.");
-        ChoiceBox<Student> studentChoiceBox = new ChoiceBox<Student>(studentObservableList);
-        ChoiceBox<Course> courseChoiceBox = new ChoiceBox<Course>(courseObservableList);
-
+        ChoiceBox<Student> studentChoiceBox = new ChoiceBox<>(studentObservableList); 
         TextField gradeField = new TextField();
         Button assignGradeButton = new Button("Assign Grade");
 
-        assignGradeButton.setOnAction(event -> {
+         assignGradeButton.setOnAction(event -> {
             Student selectedStudent = studentChoiceBox.getValue();
-            Course selectedCourse = courseChoiceBox.getValue();
-
-            String grade = gradeField.getText();
-            if (selectedStudent != null && !grade.isEmpty() && selectedCourse != null) {
-                studentManager.assignGrade(selectedStudent, selectedCourse, grade);
-                alert.showAlert("Grade assigned to student", Alert.AlertType.INFORMATION);
+            String gradeText = gradeField.getText();
+            if (selectedStudent != null && !gradeText.isEmpty()) {
+                try {
+                    int grade = Integer.parseInt(gradeText);
+                    selectedStudent.assignGrade(grade);
+                    studentTable.refresh();
+                    alert.showAlert("Grade assigned to student", Alert.AlertType.INFORMATION);
+                    gradeField.clear();
+                } catch (NumberFormatException e) {
+                    alert.showAlert("Please enter a valid numeric grade");
+                }
             } else {
-                alert.showAlert("Please select a student, a course and enter a valid grade");
+                alert.showAlert("Please select a student and enter a valid grade");
             }
         });
 
-        gradeLayout.getChildren().addAll(instructionLabel, new Label("Select Student:"), studentChoiceBox, new Label("Select Course"), courseChoiceBox, studentChoiceBox, new Label("Enter Grade:"), gradeField, assignGradeButton);
+        gradeLayout.getChildren().addAll(instructionLabel, new Label("Select Student:"), studentChoiceBox, new Label("Enter Grade:"), gradeField, assignGradeButton);
 
         return gradeLayout;
     }

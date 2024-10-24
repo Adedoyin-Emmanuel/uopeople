@@ -54,7 +54,7 @@ public class StudentManager {
         student.enrollInCourse(course);
     }
 
-    public void assignGrade(Student student, Course course, String grade) {
-        student.assignGrade(course, grade);
+    public void assignGrade(Student student,  int grade) {
+        student.assignGrade(grade);
     }
 }
