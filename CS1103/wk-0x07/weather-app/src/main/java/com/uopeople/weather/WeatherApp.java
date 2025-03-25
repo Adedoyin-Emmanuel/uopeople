@@ -1,25 +1,25 @@
 package com.uopeople.weather;
 
-import com.uopeople.weather.model.SearchHistory;
-import com.uopeople.weather.model.WeatherData;
-import com.uopeople.weather.service.WeatherService;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-import java.io.IOException;
-import java.time.LocalTime;
 import java.util.List;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.io.IOException;
+import javafx.geometry.Pos;
+import java.time.LocalTime;
+import javafx.scene.layout.*;
+import javafx.scene.control.*;
+import javafx.geometry.Insets;
+import javafx.scene.image.Image;
 import java.util.prefs.Preferences;
+import javafx.application.Platform;
+import javafx.scene.image.ImageView;
+import java.util.concurrent.Executors;
+import javafx.application.Application;
+import java.util.concurrent.ExecutorService;
+import com.uopeople.weather.model.WeatherData;
+import com.uopeople.weather.model.SearchHistory;
+import com.uopeople.weather.service.WeatherService;
 
 public class WeatherApp extends Application {
     private TextField cityInput;

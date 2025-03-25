@@ -1,12 +1,12 @@
 package com.uopeople.weather.model;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
+import java.util.ArrayList;
 import com.google.gson.Gson;
+import java.time.LocalDateTime;
+import java.util.prefs.Preferences;
 import com.google.gson.reflect.TypeToken;
+import java.time.format.DateTimeFormatter;
 
 public class SearchHistory {
     private static final String HISTORY_KEY = "search_history";

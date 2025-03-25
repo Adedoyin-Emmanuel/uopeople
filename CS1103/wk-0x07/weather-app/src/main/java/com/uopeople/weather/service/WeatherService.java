@@ -1,17 +1,17 @@
 package com.uopeople.weather.service;
 
-import com.uopeople.weather.model.WeatherData;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
-import retrofit2.http.Query;
 import java.io.IOException;
+import retrofit2.http.Query;
 import java.time.LocalDateTime;
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import java.util.prefs.Preferences;
+import com.uopeople.weather.model.WeatherData;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 @Slf4j
 public class WeatherService {
