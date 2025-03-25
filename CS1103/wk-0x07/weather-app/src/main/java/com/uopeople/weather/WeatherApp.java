@@ -49,7 +49,6 @@ public class WeatherApp extends Application {
     public void start(Stage primaryStage) {
         prefs = Preferences.userNodeForPackage(WeatherApp.class);
         
-        // Check if API key is set
         if (weatherService.getApiKey() == null) {
             showApiKeyDialog();
         }
