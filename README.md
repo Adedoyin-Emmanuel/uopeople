@@ -4,6 +4,8 @@ This repo contains my CS Assignments for BSc in Computer Science at UoPeople. Li
 
 Oh dear. I'm now doing **CS1102** and I will be writing a lot of **Java**. I really wished it was **C#**. But hey, I'm not complaining. I'm learning a lot of stuff. This should push me to take my **DSA** course in **Java** and try implementing them in **C#**. It's almost 2 months since I started writing Java and I think I like it. It looks so much like C#. Hopefully I will grab the DSA course I'm learning with it. Btw JavaFx is awesome. It was hard to set up probably because I'm coming from another lanaguage but yeah it works :blush:
 
+Oh dear, Here we go again, CS2205-01 (web programming), this will be super simple 😅. I've been doing web dev for over 4 years now. Let's see how it goes.
+
 ## Resources 👜
 
 1. How to think like a computer scientist <https://greenteapress.com/thinkpython2/thinkpython2.pdf>
