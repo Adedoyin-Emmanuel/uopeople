@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Travel Blog - Homepage</title>
+    <style>
+      /* CSS Styling for the homepage */
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 3em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+      }
+
+      /* Number blocks container */
+      .number-blocks {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+      }
+
+      /* Individual number block styling */
+      .number-block {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border: 3px solid white;
+      }
+
+      /* Individual block colors */
+      .block-1 {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      }
+      .block-2 {
+        background: linear-gradient(135deg, #4ecdc4, #44a08d);
+      }
+      .block-3 {
+        background: linear-gradient(135deg, #95e1d3, #fce38a);
+        color: #2c3e50;
+      }
+      .block-4 {
+        background: linear-gradient(135deg, #ffa726, #ff7043);
+      }
+
+      /* Hover effects */
+      .number-block:hover {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Destination content area */
+      .destination-content {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+
+      .destination-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Destination content styling */
+      .destination-content h2 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-align: center;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      /* Ordered list styling for countries */
+      .destination-content ol {
+        counter-reset: country-counter;
+        list-style: none;
+        padding: 0;
+      }
+
+      .destination-content ol > li {
+        counter-increment: country-counter;
+        margin-bottom: 25px;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+        border-left: 5px solid #3498db;
+      }
+
+      .destination-content ol > li::before {
+        content: counter(country-counter) ". ";
+        font-weight: bold;
+        font-size: 1.2em;
+        color: #3498db;
+      }
+
+      .destination-content ol > li > strong {
+        font-size: 1.3em;
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      /* Unordered list styling for cities */
+      .destination-content ul {
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+      }
+
+      .destination-content ul li {
+        padding: 8px 15px;
+        margin: 5px 0;
+        background: #ffffff;
+        border-radius: 25px;
+        border: 2px solid #ecf0f1;
+        transition: all 0.3s ease;
+        position: relative;
+        padding-left: 30px;
+      }
+
+      .destination-content ul li::before {
+        content: "✈️";
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .destination-content ul li:hover {
+        background: #3498db;
+        color: white;
+        transform: translateX(10px);
+      }
+
+      /* Back button */
+      .back-button {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1.1em;
+        margin-top: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+      }
+
+      .back-button:hover {
+        background: linear-gradient(135deg, #c0392b, #a93226);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .number-blocks {
+          gap: 15px;
+        }
+
+        .number-block {
+          width: 60px;
+          height: 60px;
+          font-size: 1.5em;
+        }
+
+        .destination-content {
+          margin: 0 10px;
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Travel Blog</h1>
+      <p>Discover amazing destinations around the world</p>
+    </div>
+
+    <!-- Interactive Number Blocks -->
+    <div class="number-blocks">
+      <div class="number-block block-1" onclick="showDestination(1)">1</div>
+      <div class="number-block block-2" onclick="showDestination(2)">2</div>
+      <div class="number-block block-3" onclick="showDestination(3)">3</div>
+      <div class="number-block block-4" onclick="showDestination(4)">4</div>
+    </div>
+
+    <!-- Destination 1: Europe -->
+    <div id="destination-1" class="destination-content">
+      <h2>Destination 1: Europe</h2>
+      <ol>
+        <li>
+          <strong>France</strong>
+          <ul>
+            <li>Paris</li>
+            <li>Nice</li>
+            <li>Marseille</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Italy</strong>
+          <ul>
+            <li>Rome</li>
+            <li>Florence</li>
+            <li>Venice</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Greece</strong>
+          <ul>
+            <li>Athens</li>
+            <li>Thessaloniki</li>
+            <li>Santorini</li>
+          </ul>
+        </li>
+      </ol>
+      <button class="back-button" onclick="hideDestinations()">
+        Back to Home
+      </button>
+    </div>
+
+    <!-- Destination 2: Asia -->
+    <div id="destination-2" class="destination-content">
+      <h2>Destination 2: Asia</h2>
+      <ol>
+        <li>
+          <strong>Japan</strong>
+          <ul>
+            <li>Tokyo</li>
+            <li>Kyoto</li>
+            <li>Osaka</li>
+          </ul>
+        </li>
+        <li>
+          <strong>China</strong>
+          <ul>
+            <li>Beijing</li>
+            <li>Shanghai</li>
+            <li>Xi'an</li>
+          </ul>
+        </li>
+        <li>
+          <strong>India</strong>
+          <ul>
+            <li>New Delhi</li>
+            <li>Mumbai</li>
+            <li>Jaipur</li>
+          </ul>
+        </li>
+      </ol>
+      <button class="back-button" onclick="hideDestinations()">
+        Back to Home
+      </button>
+    </div>
+
+    <!-- Destination 3: America -->
+    <div id="destination-3" class="destination-content">
+      <h2>Destination 3: America</h2>
+      <ol>
+        <li>
+          <strong>USA</strong>
+          <ul>
+            <li>New York City</li>
+            <li>Los Angeles</li>
+            <li>Chicago</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Brazil</strong>
+          <ul>
+            <li>Rio de Janeiro</li>
+            <li>São Paulo</li>
+            <li>Salvador</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Canada</strong>
+          <ul>
+            <li>Toronto</li>
+            <li>Vancouver</li>
+            <li>Montreal</li>
+          </ul>
+        </li>
+      </ol>
+      <button class="back-button" onclick="hideDestinations()">
+        Back to Home
+      </button>
+    </div>
+
+    <!-- Destination 4: Africa -->
+    <div id="destination-4" class="destination-content">
+      <h2>Destination 4: Africa</h2>
+      <ol>
+        <li>
+          <strong>South Africa</strong>
+          <ul>
+            <li>Cape Town</li>
+            <li>Johannesburg</li>
+            <li>Durban</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Egypt</strong>
+          <ul>
+            <li>Cairo</li>
+            <li>Luxor</li>
+            <li>Sharm El Sheikh</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Morocco</strong>
+          <ul>
+            <li>Marrakech</li>
+            <li>Casablanca</li>
+            <li>Fez</li>
+          </ul>
+        </li>
+      </ol>
+      <button class="back-button" onclick="hideDestinations()">
+        Back to Home
+      </button>
+    </div>
+
+    <script>
+      // JavaScript functionality for interactive number blocks
+
+      function showDestination(number) {
+        hideDestinations();
+
+        const selectedDestination = document.getElementById(
+          `destination-${number}`
+        );
+        selectedDestination.classList.add("active");
+
+        selectedDestination.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      function hideDestinations() {
+        // Hide all destination content
+        const allDestinations = document.querySelectorAll(
+          ".destination-content"
+        );
+        allDestinations.forEach((dest) => {
+          dest.classList.remove("active");
+        });
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key >= "1" && event.key <= "4") {
+          showDestination(parseInt(event.key));
+        } else if (event.key === "Escape") {
+          hideDestinations();
+        }
+      });
+    </script>
+  </body>
+</html>

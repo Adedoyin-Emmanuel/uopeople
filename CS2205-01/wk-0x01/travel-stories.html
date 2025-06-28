@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Travel Blog - Travel Stories</title>
+    <style>
+      /* CSS Styling for travel stories page */
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 3em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.3em;
+        opacity: 0.9;
+      }
+
+      /* Table container */
+      .table-container {
+        max-width: 1000px;
+        margin: 0 auto 60px auto;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Table styling */
+      .destination-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 1.1em;
+      }
+
+      /* Table headers */
+      .destination-table th {
+        background: linear-gradient(135deg, #4a69bd, #3742fa);
+        color: white;
+        padding: 20px;
+        font-size: 1.4em;
+        font-weight: bold;
+        text-align: center;
+        border: none;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Table rows */
+      .destination-table td {
+        padding: 25px;
+        text-align: center;
+        border: 3px solid #f1f2f6;
+        vertical-align: middle;
+      }
+
+      /* Alternating row colors */
+      .destination-table tbody tr:nth-child(odd) {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      }
+
+      .destination-table tbody tr:nth-child(even) {
+        background: linear-gradient(135deg, #ffffff, #f8f9fa);
+      }
+
+      /* Row hover effect */
+      .destination-table tbody tr:hover {
+        background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+        transform: scale(1.02);
+        transition: all 0.3s ease;
+      }
+
+      /* Destination names styling */
+      .destination-name {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #2c3e50;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Image styling */
+      .attraction-image {
+        width: 200px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 3px solid #ffffff;
+      }
+
+      /* Image hover effects */
+      .attraction-image:hover {
+        opacity: 0.7;
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        border-color: #3742fa;
+      }
+
+      /* Information sections at bottom */
+      .info-section {
+        max-width: 800px;
+        margin: 0 auto 40px auto;
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+
+      .info-section.show {
+        display: block;
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .info-section h2 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-align: center;
+        border-bottom: 4px solid #3742fa;
+        padding-bottom: 15px;
+      }
+
+      .info-section img {
+        width: 100%;
+        max-width: 400px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 15px;
+        margin: 20px auto;
+        display: block;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .info-section p {
+        font-size: 1.2em;
+        line-height: 1.8;
+        color: #555;
+        text-align: justify;
+        margin-bottom: 20px;
+      }
+
+      .info-section .highlight {
+        background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #fdcb6e;
+        margin: 20px 0;
+        font-style: italic;
+      }
+
+      /* Back to top button */
+      .back-to-top {
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 1.1em;
+        margin: 20px auto;
+        display: block;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+      }
+
+      .back-to-top:hover {
+        background: linear-gradient(135deg, #5f3dc4, #6c5ce7);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(108, 92, 231, 0.4);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .destination-table th,
+        .destination-table td {
+          padding: 15px 10px;
+          font-size: 0.9em;
+        }
+
+        .attraction-image {
+          width: 150px;
+          height: 100px;
+        }
+
+        .info-section {
+          margin: 0 10px 30px 10px;
+          padding: 20px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+      }
+
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Navigation breadcrumb */
+      .navigation {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .nav-link {
+        color: white;
+        text-decoration: none;
+        font-size: 1.1em;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+      }
+
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Travel Destinations</h1>
+      <p>Explore the world's most amazing attractions</p>
+    </div>
+
+    <div class="navigation">
+      <a href="homepage.html" class="nav-link">← Back to Homepage</a>
+    </div>
+
+    <!-- Travel Destinations Table -->
+    <div class="table-container">
+      <table class="destination-table">
+        <thead>
+          <tr>
+            <th>Destination</th>
+            <th>Attraction</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="destination-name">Paris</td>
+            <td>
+              <img
+                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzM0OThkYiIvPgo8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtZmFtaWx5PSJBcmlhbCI+RWlmZmVsIFRvd2VyPC90ZXh0Pgo8L3N2Zz4="
+                alt="Eiffel Tower"
+                class="attraction-image"
+                onclick="showInfo('paris')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="destination-name">Rome</td>
+            <td>
+              <img
+                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzk1ZTFkMyIvPgo8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzJjM2U1MCIgZm9udC1zaXplPSIxOCIgZm9udC1mYW1pbHk9IkFyaWFsIj5Db2xvc3NldW08L3RleHQ+Cjwvc3ZnPg=="
+                alt="Colosseum"
+                class="attraction-image"
+                onclick="showInfo('rome')"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="destination-name">New York</td>
+            <td>
+              <img
+                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZmYTcyNiIvPgo8dGV4dCB4PSI1MCUiIHk9IjQ1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCI+U3RhdHVlIG9mPC90ZXh0Pgo8dGV4dCB4PSI1MCUiIHk9IjYwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCI+TGliZXJ0eTwvdGV4dD4KPC9zdmc+"
+                alt="Statue of Liberty"
+                class="attraction-image"
+                onclick="showInfo('newyork')"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Information Sections -->
+    <div id="paris-info" class="info-section">
+      <h2>🗼 Eiffel Tower - Paris</h2>
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzM0OThkYiIvPgo8dGV4dCB4PSI1MCUiIHk9IjQwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtZmFtaWx5PSJBcmlhbCI+RWlmZmVsIFRvd2VyPC90ZXh0Pgo8dGV4dCB4PSI1MCUiIHk9IjYwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtZmFtaWx5PSJBcmlhbCI+UGFyaXMsIEZyYW5jZTwvdGV4dD4KPC9zdmc+"
+        alt="Eiffel Tower"
+      />
+      <p>
+        The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in
+        Paris, France. It is named after the engineer Gustave Eiffel, whose
+        company designed and built the tower. Constructed from 1887 to 1889 as
+        the entrance to the 1889 World's Fair, it was initially criticized by
+        some of France's leading artists and intellectuals for its design, but
+        it has become a global cultural icon of France and one of the most
+        recognizable structures in the world.
+      </p>
+
+      <div class="highlight">
+        <strong>Fun Fact:</strong> The Eiffel Tower is 324 meters (1,063 ft)
+        tall, about the same height as an 81-story building, and is the tallest
+        structure in Paris.
+      </div>
+
+      <p>
+        The tower has three levels for visitors, with restaurants on the first
+        and second levels. The top level's upper platform is 276 m (906 ft)
+        above the ground – the highest observation deck accessible to the public
+        in the European Union. Tickets can be purchased to ascend by stairs or
+        lift to the first and second levels. The climb from ground level to the
+        first level is over 300 steps, as is the climb from the first level to
+        the second.
+      </p>
+
+      <button class="back-to-top" onclick="scrollToTop()">Back to Top</button>
+    </div>
+
+    <div id="rome-info" class="info-section">
+      <h2>🏛️ Colosseum - Rome</h2>
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzk1ZTFkMyIvPgo8dGV4dCB4PSI1MCUiIHk9IjQwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzJjM2U1MCIgZm9udC1zaXplPSIyNCIgZm9udC1mYW1pbHk9IkFyaWFsIj5Db2xvc3NldW08L3RleHQ+Cjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMmMzZTUwIiBmb250LXNpemU9IjE4IiBmb250LWZhbWlseT0iQXJpYWwiPlJvbWUsIEl0YWx5PC90ZXh0Pgo8L3N2Zz4="
+        alt="Colosseum"
+      />
+      <p>
+        The Colosseum is an oval amphitheatre in the centre of the city of Rome,
+        Italy. Built of travertine limestone, tuff, and brick-faced concrete, it
+        was the largest amphitheatre ever built. The Colosseum is situated just
+        east of the Roman Forum. Construction began under the emperor Vespasian
+        in AD 72 and was completed in AD 80 under his successor and heir, Titus.
+      </p>
+
+      <div class="highlight">
+        <strong>Historical Significance:</strong> The Colosseum could hold an
+        estimated 50,000 to 80,000 spectators at various points of its history
+        over the centuries, having an average audience of some 65,000.
+      </div>
+
+      <p>
+        The Colosseum was used for gladiatorial contests and public spectacles
+        such as mock naval battles, animal hunts, executions, re-enactments of
+        famous battles, and dramas based on Classical mythology. The building
+        ceased to be used for entertainment in the early medieval era. It was
+        later reused for various purposes such as housing, workshops, quarters
+        for a religious order, a fortress, a quarry, and a Christian shrine.
+      </p>
+
+      <button class="back-to-top" onclick="scrollToTop()">Back to Top</button>
+    </div>
+
+    <div id="newyork-info" class="info-section">
+      <h2>🗽 Statue of Liberty - New York</h2>
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2ZmYTcyNiIvPgo8dGV4dCB4PSI1MCUiIHk9IjM1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtZmFtaWx5PSJBcmlhbCI+U3RhdHVlIG9mIExpYmVydHk8L3RleHQ+Cjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxOCIgZm9udC1mYW1pbHk9IkFyaWFsIj5OZXcgWW9yaywgVVNBPC90ZXh0Pgo8L3N2Zz4="
+        alt="Statue of Liberty"
+      />
+      <p>
+        The Statue of Liberty is a neoclassical sculpture on Liberty Island in
+        New York Harbor in New York City, in the United States. The copper
+        statue, a gift from the people of France to the people of the United
+        States, was designed by French sculptor Frédéric Auguste Bartholdi and
+        its metal framework was built by Gustave Eiffel. The statue was
+        dedicated on October 28, 1886.
+      </p>
+
+      <div class="highlight">
+        <strong>Symbol of Freedom:</strong> The Statue of Liberty is often
+        associated with freedom and serves as a symbol of the United States and
+        its ideals of liberty and peace.
+      </div>
+
+      <p>
+        The statue is a figure of Libertas, a robed Roman liberty goddess. She
+        holds a torch above her head with her right hand, and in her left hand
+        carries a tabula ansata inscribed JULY IV MDCCLXXVI (July 4, 1776 in
+        Roman numerals), the date of the American Declaration of Independence. A
+        broken shackle and chain lie at her feet as she walks forward,
+        commemorating the recent national abolition of slavery.
+      </p>
+
+      <button class="back-to-top" onclick="scrollToTop()">Back to Top</button>
+    </div>
+
+    <script>
+      // JavaScript functionality for image clicking and jumping to sections
+      function showInfo(destination) {
+        const allSections = document.querySelectorAll(".info-section");
+        allSections.forEach((section) => {
+          section.classList.remove("show");
+        });
+
+        setTimeout(() => {
+          const targetSection = document.getElementById(destination + "-info");
+          targetSection.classList.add("show");
+
+          targetSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
+      }
+
+      function scrollToTop() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          scrollToTop();
+        }
+      });
+
+      document.querySelectorAll(".attraction-image").forEach((img) => {
+        img.addEventListener("click", function () {
+          this.style.transform = "scale(0.95)";
+          setTimeout(() => {
+            this.style.transform = "";
+          }, 150);
+        });
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      });
+
+      observer.observe(document.querySelector(".table-container"));
+    </script>
+  </body>
+</html>
