@@ -363,13 +363,13 @@
        * Prevents submission if validation fails
        */
       function handleFormSubmission(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault(); 
 
         // Validate all form fields before submission
         if (validateCompleteForm()) {
           // If validation passes, show success message and submit
           alert("Form submitted successfully! Thank you for contacting us.");
-          // In a real application, this would submit to the server
+          // In a real application, this would submit to the server using POST method or make an API call with fetch API or axios
           // contactForm.submit();
         }
       }
