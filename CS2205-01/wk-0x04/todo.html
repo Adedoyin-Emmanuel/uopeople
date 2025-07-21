@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do List</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      .container {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+        font-size: 28px;
+      }
+
+      .add-task-section {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+      }
+
+      #taskInput {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      #taskInput:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+
+      #addTaskBtn {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      #addTaskBtn:hover {
+        background-color: #45a049;
+      }
+
+      .task-list {
+        list-style: none;
+      }
+
+      .task-item {
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .task-item.completed {
+        background-color: #f0f8f0;
+      }
+
+      .task-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #4caf50;
+      }
+
+      .task-text {
+        flex: 1;
+        font-size: 16px;
+        color: #333;
+        word-wrap: break-word;
+      }
+
+      .task-item.completed .task-text {
+        text-decoration: line-through;
+        color: #888;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 5px;
+      }
+
+      .edit-btn,
+      .remove-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .edit-btn {
+        background-color: #ff6b6b;
+        color: white;
+      }
+
+      .edit-btn:hover {
+        background-color: #ff5252;
+      }
+
+      .remove-btn {
+        background-color: #ff6b6b;
+        color: white;
+      }
+
+      .remove-btn:hover {
+        background-color: #ff5252;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>To-Do List</h1>
+
+      <div class="add-task-section">
+        <input type="text" id="taskInput" placeholder="Enter new task" />
+        <button id="addTaskBtn">Add Task</button>
+      </div>
+
+      <ul id="taskList" class="task-list">
+        <!-- Tasks will be dynamically added here -->
+      </ul>
+    </div>
+
+    <script>
+      // DOM elements
+      const taskInput = document.getElementById("taskInput");
+      const addTaskBtn = document.getElementById("addTaskBtn");
+      const taskList = document.getElementById("taskList");
+
+      // Task counter for unique IDs
+      let taskIdCounter = 1;
+
+      // Event listeners
+      addTaskBtn.addEventListener("click", addTask);
+      taskInput.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          addTask();
+        }
+      });
+
+      // Event delegation for task list
+      taskList.addEventListener("click", handleTaskActions);
+
+      // Add new task
+      function addTask() {
+        const taskText = taskInput.value.trim();
+
+        if (taskText === "") {
+          alert("Please enter a task!");
+          return;
+        }
+
+        const taskId = `task-${taskIdCounter++}`;
+        const taskItem = createTaskElement(taskId, taskText, false);
+
+        taskList.appendChild(taskItem);
+        taskInput.value = "";
+        taskInput.focus();
+      }
+
+      // Create task element
+      function createTaskElement(taskId, taskText, isCompleted) {
+        const li = document.createElement("li");
+        li.className = `task-item ${isCompleted ? "completed" : ""}`;
+        li.dataset.taskId = taskId;
+
+        li.innerHTML = `
+        <input type="checkbox" class="task-checkbox" ${
+          isCompleted ? "checked" : ""
+        }>
+        <span class="task-text">${escapeHtml(taskText)}</span>
+        <div class="task-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="remove-btn">Remove</button>
+        </div>
+    `;
+
+        return li;
+      }
+
+      // Handle task actions using event delegation
+      function handleTaskActions(e) {
+        const target = e.target;
+        const taskItem = target.closest(".task-item");
+
+        if (!taskItem) return;
+
+        const taskId = taskItem.dataset.taskId;
+
+        // Handle checkbox (complete/incomplete)
+        if (target.classList.contains("task-checkbox")) {
+          toggleTaskComplete(taskItem, target.checked);
+        }
+
+        // Handle edit button
+        if (target.classList.contains("edit-btn")) {
+          editTask(taskItem);
+        }
+
+        // Handle remove button
+        if (target.classList.contains("remove-btn")) {
+          removeTask(taskItem);
+        }
+      }
+
+      // Toggle task completion
+      function toggleTaskComplete(taskItem, isCompleted) {
+        if (isCompleted) {
+          taskItem.classList.add("completed");
+        } else {
+          taskItem.classList.remove("completed");
+        }
+      }
+
+      // Edit task
+      function editTask(taskItem) {
+        const taskText = taskItem.querySelector(".task-text");
+        const originalText = taskText.textContent;
+
+        // Use native prompt dialog
+        const newText = prompt("Edit task:", originalText);
+
+        // Check if user clicked Cancel (prompt returns null) or entered empty text
+        if (newText === null) {
+          return; // User cancelled
+        }
+
+        const trimmedText = newText.trim();
+        if (trimmedText === "") {
+          alert("Task cannot be empty!");
+          return;
+        }
+
+        // Update task text
+        taskText.textContent = trimmedText;
+      }
+
+      // Remove task
+      function removeTask(taskItem) {
+        if (confirm("Are you sure you want to remove this task?")) {
+          taskItem.remove();
+        }
+      }
+
+      // Utility function to escape HTML
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Add some sample tasks for demonstration
+      document.addEventListener("DOMContentLoaded", function () {
+        // Add a couple of sample tasks
+        const sampleTasks = [
+          { text: "Finish CS2205 programming assignment", completed: true },
+          { text: "Buy vegetables", completed: false },
+        ];
+
+        sampleTasks.forEach((task) => {
+          const taskId = `task-${taskIdCounter++}`;
+          const taskItem = createTaskElement(taskId, task.text, task.completed);
+          taskList.appendChild(taskItem);
+        });
+      });
+    </script>
+  </body>
+</html>
