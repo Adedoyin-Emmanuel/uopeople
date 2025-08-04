@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookstore Inventory</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 300;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .inventory-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .inventory-table th {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 1.1em;
+      }
+
+      .inventory-table td {
+        padding: 15px;
+        border-bottom: 1px solid #ecf0f1;
+        vertical-align: top;
+      }
+
+      .inventory-table tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.3s ease;
+      }
+
+      .book-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1em;
+      }
+
+      .author-name {
+        color: #7f8c8d;
+        font-style: italic;
+      }
+
+      .publication-year {
+        background: #e74c3c;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      .publisher {
+        color: #34495e;
+        font-weight: 500;
+      }
+
+      .page-count {
+        color: #7f8c8d;
+        font-size: 0.9em;
+      }
+
+      .availability {
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9em;
+        text-transform: uppercase;
+      }
+
+      .available {
+        background: #27ae60;
+        color: white;
+      }
+
+      .unavailable {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 50px;
+        font-size: 1.2em;
+        color: #7f8c8d;
+      }
+
+      .error {
+        background: #e74c3c;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 150px;
+        margin: 10px;
+      }
+
+      .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 0.9em;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📚 Bookstore Inventory</h1>
+        <p>Comprehensive catalog of our literary collection</p>
+      </div>
+
+      <div class="content">
+        <div class="stats" id="stats">
+          <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div id="loading" class="loading">Loading inventory data...</div>
+
+        <div id="error" class="error" style="display: none">
+          Error loading inventory data. Please try again.
+        </div>
+
+        <table
+          class="inventory-table"
+          id="inventoryTable"
+          style="display: none"
+        >
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Publication Year</th>
+              <th>Publisher</th>
+              <th>Pages</th>
+              <th>Availability</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody">
+            <!-- Table body will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // Sample inventory data (in a real application, this would come from a server)
+      const inventoryData = {
+        books: [
+          {
+            title: "The Great Gatsby",
+            author: {
+              firstName: "F. Scott",
+              lastName: "Fitzgerald",
+            },
+            publicationYear: 1925,
+            details: {
+              publisher: "Charles Scribner's Sons",
+              pageCount: 218,
+              available: true,
+            },
+          },
+          {
+            title: "To Kill a Mockingbird",
+            author: {
+              firstName: "Harper",
+              lastName: "Lee",
+            },
+            publicationYear: 1960,
+            details: {
+              publisher: "J.B. Lippincott & Co.",
+              pageCount: 281,
+              available: true,
+            },
+          },
+          {
+            title: "1984",
+            author: {
+              firstName: "George",
+              lastName: "Orwell",
+            },
+            publicationYear: 1949,
+            details: {
+              publisher: "Secker & Warburg",
+              pageCount: 328,
+              available: false,
+            },
+          },
+        ],
+      };
+
+      function displayInventory() {
+        const loading = document.getElementById("loading");
+        const error = document.getElementById("error");
+        const table = document.getElementById("inventoryTable");
+        const tbody = document.getElementById("inventoryBody");
+        const stats = document.getElementById("stats");
+
+        try {
+          // Hide loading and error messages
+          loading.style.display = "none";
+          error.style.display = "none";
+
+          // Calculate statistics
+          const totalBooks = inventoryData.books.length;
+          const availableBooks = inventoryData.books.filter(
+            (book) => book.details.available
+          ).length;
+          const unavailableBooks = totalBooks - availableBooks;
+
+          // Display statistics
+          stats.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${totalBooks}</div>
+                        <div class="stat-label">Total Books</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${availableBooks}</div>
+                        <div class="stat-label">Available</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${unavailableBooks}</div>
+                        <div class="stat-label">Unavailable</div>
+                    </div>
+                `;
+
+          // Populate table
+          tbody.innerHTML = "";
+          inventoryData.books.forEach((book) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td><div class="book-title">${book.title}</div></td>
+                        <td><div class="author-name">${book.author.firstName} ${
+              book.author.lastName
+            }</div></td>
+                        <td><span class="publication-year">${
+                          book.publicationYear
+                        }</span></td>
+                        <td><div class="publisher">${
+                          book.details.publisher
+                        }</div></td>
+                        <td><div class="page-count">${
+                          book.details.pageCount
+                        } pages</div></td>
+                        <td>
+                            <span class="availability ${
+                              book.details.available
+                                ? "available"
+                                : "unavailable"
+                            }">
+                                ${
+                                  book.details.available
+                                    ? "Available"
+                                    : "Unavailable"
+                                }
+                            </span>
+                        </td>
+                    `;
+            tbody.appendChild(row);
+          });
+
+          // Show table
+          table.style.display = "table";
+        } catch (err) {
+          console.error("Error displaying inventory:", err);
+          loading.style.display = "none";
+          error.style.display = "block";
+        }
+      }
+
+      // Initialize the page
+      document.addEventListener("DOMContentLoaded", function () {
+        // Simulate loading delay for better UX
+        setTimeout(displayInventory, 1000);
+      });
+    </script>
+  </body>
+</html>

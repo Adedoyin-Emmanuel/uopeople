@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+    <book id="B001" available="true">
+        <title>
+            The Great Gatsby
+            <publicationYear>1925</publicationYear>
+        </title>
+        <author>
+            <firstName>F. Scott</firstName>
+            <lastName>Fitzgerald</lastName>
+        </author>
+    </book>
+    
+    <book id="B002" available="true">
+        <title>
+            To Kill a Mockingbird
+            <publicationYear>1960</publicationYear>
+        </title>
+        <author>
+            <firstName>Harper</firstName>
+            <lastName>Lee</lastName>
+        </author>
+    </book>
+    
+    <book id="B003" available="false">
+        <title>
+            1984
+            <publicationYear>1949</publicationYear>
+        </title>
+        <author>
+            <firstName>George</firstName>
+            <lastName>Orwell</lastName>
+        </author>
+    </book>
+</catalog> 
