@@ -37,38 +37,64 @@
   </head>
   <body>
     <h1>Bookstore Inventory</h1>
+    <div id="inventory-container"></div>
 
-    <div class="book">
-      <div class="book-title">• The Great Gatsby</div>
-      <div class="book-details">
-        <div>Author: F. Scott Fitzgerald</div>
-        <div>Publication Year: 1925</div>
-        <div>Publisher: Charles Scribner's Sons</div>
-        <div>Page Count: 218</div>
-        <div>Available: Yes</div>
-      </div>
-    </div>
+    <script>
+      // Store the book data in a JavaScript object
+      const inventoryData = {
+        books: [
+          {
+            title: "The Great Gatsby",
+            author: "F. Scott Fitzgerald",
+            publicationYear: 1925,
+            publisher: "Charles Scribner's Sons",
+            pageCount: 218,
+            available: "Yes",
+          },
+          {
+            title: "To Kill a Mockingbird",
+            author: "Harper Lee",
+            publicationYear: 1960,
+            publisher: "J.B. Lippincott & Co.",
+            pageCount: 281,
+            available: "Yes",
+          },
+          {
+            title: "1984",
+            author: "George Orwell",
+            publicationYear: 1949,
+            publisher: "Secker & Warburg",
+            pageCount: 328,
+            available: "No",
+          },
+        ],
+      };
 
-    <div class="book">
-      <div class="book-title">• To Kill a Mockingbird</div>
-      <div class="book-details">
-        <div>Author: Harper Lee</div>
-        <div>Publication Year: 1960</div>
-        <div>Publisher: J.B. Lippincott & Co.</div>
-        <div>Page Count: 281</div>
-        <div>Available: Yes</div>
-      </div>
-    </div>
+      // Function to render the inventory
+      function renderInventory() {
+        const container = document.getElementById("inventory-container");
 
-    <div class="book">
-      <div class="book-title">• 1984</div>
-      <div class="book-details">
-        <div>Author: George Orwell</div>
-        <div>Publication Year: 1949</div>
-        <div>Publisher: Secker & Warburg</div>
-        <div>Page Count: 328</div>
-        <div>Available: No</div>
-      </div>
-    </div>
+        inventoryData.books.forEach((book) => {
+          const bookElement = document.createElement("div");
+          bookElement.className = "book";
+
+          bookElement.innerHTML = `
+            <div class="book-title">• ${book.title}</div>
+            <div class="book-details">
+              <div>Author: ${book.author}</div>
+              <div>Publication Year: ${book.publicationYear}</div>
+              <div>Publisher: ${book.publisher}</div>
+              <div>Page Count: ${book.pageCount}</div>
+              <div>Available: ${book.available}</div>
+            </div>
+          `;
+
+          container.appendChild(bookElement);
+        });
+      }
+
+      // Call the function when the page loads
+      document.addEventListener("DOMContentLoaded", renderInventory);
+    </script>
   </body>
 </html>
