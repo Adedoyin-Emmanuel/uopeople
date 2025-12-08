@@ -66,7 +66,10 @@ $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 // Example DB insert using PDO and prepared statements.
 // Intent: avoid SQL injection by binding values; use descriptive names.
 try {
-    // Replace with your real DB settings when testing locally
+    /**
+     * Also, I'm using simple values as the db credentials here.
+     * in a production app, it will be stored securely as environment variables.
+     */
     $pdo = new PDO(
         "mysql:host=localhost;dbname=community",
         "dbuser",
