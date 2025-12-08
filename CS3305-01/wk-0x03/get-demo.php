@@ -3,7 +3,7 @@
 /**
  * get-demo.php
  * Intent: show how GET makes parameters visible and shareable.
- * Example URL: get_demo.php?q=hello
+ * Example URL: get-demo.php?q=hello
  */
 $q = isset($_GET["q"]) ? trim($_GET["q"]) : "";
 echo "<h2>Search demo</h2>";
