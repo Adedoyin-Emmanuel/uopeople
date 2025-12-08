@@ -70,13 +70,17 @@ try {
      * Also, I'm using simple values as the db credentials here.
      * in a production app, it will be stored securely as environment variables.
      */
+
+    $host = "127.0.0.1";
+    $db = "community";
+    $user = "user";
+    $pass = "password";
+
     $pdo = new PDO(
-        "mysql:host=localhost;dbname=community",
-        "dbuser",
-        "dbpass",
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        ],
+        "mysql:host=$host;dbname=$db;charset=utf8mb4",
+        $user,
+        $pass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
     );
 
     $stmt = $pdo->prepare(
