@@ -1,13 +1,13 @@
 <?php
 
 /**
- * process_register.php
+ * process-register.php
  * Intent: validate and securely store a new user. Use PDO + prepared statements
  * to prevent SQL injection, and password_hash to avoid storing plain text.
  */
 $errors = [];
 
-// Helper funciton: sanitize user-visible output to avoid XSS
+// Helper function: sanitize user-visible output to avoid XSS
 function e($str)
 {
     return htmlspecialchars($str, ENT_QUOTES, "UTF-8");
