@@ -6,14 +6,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +48,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+enum class Gender {
+    MALE,
+    FEMALE
+}
+
 enum class BmiCategory {
     UNDERWEIGHT,
     NORMAL,
@@ -53,8 +61,12 @@ enum class BmiCategory {
 
 data class BmiResult(val bmi: Float, val category: BmiCategory)
 
-class BmiCalculator {
-    fun calculateBmi(weightKg: Float, heightCm: Float): BmiResult? {
+data class PersonHealthMetrics(
+    val weightKg: Float,
+    val heightCm: Float,
+    val gender: Gender
+) {
+    fun calculateBmi(): BmiResult? {
         if (heightCm <= 0f) return null
         val heightM = heightCm / 100
         val bmi = weightKg / (heightM * heightM)
@@ -71,8 +83,8 @@ class BmiCalculator {
 fun BmiCalculatorScreen(modifier: Modifier = Modifier) {
     var weight by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
+    var selectedGender by remember { mutableStateOf<Gender?>(null) }
     var bmiResult by remember { mutableStateOf<BmiResult?>(null) }
-    val bmiCalculator = remember { BmiCalculator() }
 
     Column(
         modifier = modifier.padding(16.dp).fillMaxSize(),
@@ -93,11 +105,41 @@ fun BmiCalculatorScreen(modifier: Modifier = Modifier) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Gender", style = MaterialTheme.typography.titleMedium)
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Gender.values().forEach { gender ->
+                Row(
+                    Modifier
+                        .selectable(
+                            selected = (selectedGender == gender),
+                            onClick = { selectedGender = gender }
+                        )
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = (selectedGender == gender),
+                        onClick = { selectedGender = gender }
+                    )
+                    Text(
+                        text = gender.name.lowercase().replaceFirstChar { it.uppercaseChar() },
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(onClick = {
             val weightKg = weight.toFloatOrNull()
             val heightCm = height.toFloatOrNull()
-            if (weightKg != null && heightCm != null) {
-                bmiResult = bmiCalculator.calculateBmi(weightKg, heightCm)
+            if (weightKg != null && heightCm != null && selectedGender != null) {
+                val metrics = PersonHealthMetrics(weightKg, heightCm, selectedGender!!)
+                bmiResult = metrics.calculateBmi()
             }
         }) {
             Text("Calculate BMI")
