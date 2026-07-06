@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Virtual Campus Explorer</title>
+<style>
+  html, body { margin: 0; overflow: hidden; height: 100%; background: #000; }
+  canvas { display: block; }
+
+  #ui {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: sans-serif;
+    font-size: 13px;
+  }
+
+  .panel {
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+  }
+
+  button {
+    cursor: pointer;
+    padding: 4px 6px;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div class="panel">
+    <strong>Camera</strong>
+    <button id="btnProjection">Switch to Orthographic</button>
+    <button id="presetEntrance">Go to Entrance</button>
+    <button id="presetLibrary">Go to Library</button>
+    <button id="presetQuad">Go to Quad (aerial)</button>
+  </div>
+
+  <div class="panel">
+    <strong>Clipping planes</strong>
+    <label>Near: <span id="nearVal"></span></label>
+    <input id="nearSlider" type="range" min="0.1" max="20" step="0.1" value="0.1">
+    <label>Far: <span id="farVal"></span></label>
+    <input id="farSlider" type="range" min="10" max="200" step="1" value="1000">
+  </div>
+
+  <div class="panel">
+    <strong>Depth buffering</strong>
+    <label><input id="depthToggle" type="checkbox" checked> Depth test enabled (uncheck to reproduce the overlap bug)</label>
+  </div>
+
+  <div class="panel">
+    <strong>Viewport</strong>
+    <label><input id="minimapToggle" type="checkbox" checked> Show minimap viewport (top-left)</label>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(20, 30, 10);
+scene.add(sun);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x559955 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+// "Campus buildings" laid out with increasing distance, for the projection comparison task
+const buildingData = [
+  { x: 0, z: -5, h: 4, color: 0xcc4444 },
+  { x: -6, z: -20, h: 8, color: 0x4477cc },
+  { x: 7, z: -35, h: 12, color: 0xccaa33 },
+  { x: -3, z: -55, h: 16, color: 0x8844cc },
+  { x: 5, z: -80, h: 20, color: 0x44cc99 },
+];
+buildingData.forEach(b => {
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(4, b.h, 4),
+    new THREE.MeshStandardMaterial({ color: b.color })
+  );
+  box.position.set(b.x, b.h / 2, b.z);
+  scene.add(box);
+});
+
+// Depth-buffering demo pair: near (red) added first, far (blue) added second on purpose,
+// so that with depth testing off, draw order wins and the far box wrongly covers the near one.
+const nearBoxMat = new THREE.MeshStandardMaterial({ color: 0xff3333, depthTest: true });
+const nearBox = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), nearBoxMat);
+nearBox.position.set(14, 2, 6);
+scene.add(nearBox);
+
+const farBoxMat = new THREE.MeshStandardMaterial({ color: 0x3355ff, depthTest: true });
+const farBox = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), farBoxMat);
+farBox.position.set(14, 2, -4);
+scene.add(farBox);
+
+const aspect = window.innerWidth / window.innerHeight;
+
+const perspectiveCamera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+perspectiveCamera.position.set(0, 8, 25);
+
+const frustumSize = 30;
+const orthoCamera = new THREE.OrthographicCamera(
+  -frustumSize * aspect / 2, frustumSize * aspect / 2,
+  frustumSize / 2, -frustumSize / 2,
+  0.1, 1000
+);
+orthoCamera.position.set(0, 8, 25);
+
+const minimapCamera = new THREE.OrthographicCamera(-60, 60, 60, -60, 1, 300);
+minimapCamera.position.set(0, 150, 0);
+minimapCamera.lookAt(0, 0, 0);
+
+const perspectiveControls = new THREE.OrbitControls(perspectiveCamera, renderer.domElement);
+perspectiveControls.target.set(0, 4, -20);
+perspectiveControls.update();
+
+const orthoControls = new THREE.OrbitControls(orthoCamera, renderer.domElement);
+orthoControls.target.set(0, 4, -20);
+orthoControls.update();
+
+let activeCamera = perspectiveCamera;
+let activeControls = perspectiveControls;
+let usingOrtho = false;
+
+const btnProjection = document.getElementById('btnProjection');
+btnProjection.addEventListener('click', () => {
+  usingOrtho = !usingOrtho;
+  activeCamera = usingOrtho ? orthoCamera : perspectiveCamera;
+  activeControls = usingOrtho ? orthoControls : perspectiveControls;
+  btnProjection.textContent = usingOrtho ? 'Switch to Perspective' : 'Switch to Orthographic';
+  syncClippingUI();
+});
+
+function setCameraPreset(pos, target) {
+  activeCamera.position.set(...pos);
+  activeControls.target.set(...target);
+  activeControls.update();
+}
+
+document.getElementById('presetEntrance').addEventListener('click', () =>
+  setCameraPreset([0, 3, 15], [0, 3, -5]));
+document.getElementById('presetLibrary').addEventListener('click', () =>
+  setCameraPreset([-6, 5, -5], [-6, 5, -20]));
+document.getElementById('presetQuad').addEventListener('click', () =>
+  setCameraPreset([0, 60, 5], [0, 0, -30]));
+
+const nearSlider = document.getElementById('nearSlider');
+const farSlider = document.getElementById('farSlider');
+const nearVal = document.getElementById('nearVal');
+const farVal = document.getElementById('farVal');
+
+function syncClippingUI() {
+  nearSlider.value = activeCamera.near;
+  farSlider.value = Math.min(activeCamera.far, 200);
+  nearVal.textContent = activeCamera.near.toFixed(1);
+  farVal.textContent = activeCamera.far.toFixed(0);
+}
+syncClippingUI();
+
+nearSlider.addEventListener('input', () => {
+  activeCamera.near = parseFloat(nearSlider.value);
+  nearVal.textContent = activeCamera.near.toFixed(1);
+  activeCamera.updateProjectionMatrix();
+});
+
+farSlider.addEventListener('input', () => {
+  activeCamera.far = parseFloat(farSlider.value);
+  farVal.textContent = activeCamera.far.toFixed(0);
+  activeCamera.updateProjectionMatrix();
+});
+
+document.getElementById('depthToggle').addEventListener('change', e => {
+  nearBoxMat.depthTest = e.target.checked;
+  farBoxMat.depthTest = e.target.checked;
+});
+
+let minimapEnabled = true;
+document.getElementById('minimapToggle').addEventListener('change', e => {
+  minimapEnabled = e.target.checked;
+});
+
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+
+  perspectiveCamera.aspect = w / h;
+  perspectiveCamera.updateProjectionMatrix();
+
+  const newAspect = w / h;
+  orthoCamera.left = -frustumSize * newAspect / 2;
+  orthoCamera.right = frustumSize * newAspect / 2;
+  orthoCamera.updateProjectionMatrix();
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  activeControls.update();
+
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+  renderer.render(scene, activeCamera);
+
+  if (minimapEnabled) {
+    const size = 220, margin = 20;
+    renderer.setScissorTest(true);
+    renderer.setViewport(margin, window.innerHeight - size - margin, size, size);
+    renderer.setScissor(margin, window.innerHeight - size - margin, size, size);
+    renderer.render(scene, minimapCamera);
+    renderer.setScissorTest(false);
+  }
+}
+animate();
+</script>
+
+</body>
+</html>
