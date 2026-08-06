@@ -5,19 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Smart Metro Simulation System</title>
 
-<!--
-  NOTE ON THE THREE.JS BUILD
-  ---------------------------
-  The assignment asked for three@0.170.0/build/three.min.js, but as of r161
-  three.js stopped shipping the classic global (non-module) build entirely
-  -- build/three.min.js and build/three.js were removed from the npm
-  package, and that URL now 404s on jsDelivr. r160.0 is the newest release
-  that still ships this file, so it is used below. It exposes the exact
-  same global `THREE` object the classic build always has, is loaded with a
-  single <script src="..."> tag (no <script type="module">, no import
-  maps, no bundler), and every API used in this file (THREE.MathUtils,
-  SRGBColorSpace, PCFSoftShadowMap, etc.) is present in r160.
--->
 <style>
   * { box-sizing: border-box; }
   html, body {
