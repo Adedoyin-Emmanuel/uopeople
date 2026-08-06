@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Metro Simulation System</title>
+
+<!--
+  NOTE ON THE THREE.JS BUILD
+  ---------------------------
+  The assignment asked for three@0.170.0/build/three.min.js, but as of r161
+  three.js stopped shipping the classic global (non-module) build entirely
+  -- build/three.min.js and build/three.js were removed from the npm
+  package, and that URL now 404s on jsDelivr. r160.0 is the newest release
+  that still ships this file, so it is used below. It exposes the exact
+  same global `THREE` object the classic build always has, is loaded with a
+  single <script src="..."> tag (no <script type="module">, no import
+  maps, no bundler), and every API used in this file (THREE.MathUtils,
+  SRGBColorSpace, PCFSoftShadowMap, etc.) is present in r160.
+-->
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background: #0a1218;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+
+  canvas { display: block; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    position: fixed;
+    z-index: 10;
+    color: #e6f1f8;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .panel {
+    background: rgba(8, 16, 24, 0.72);
+    border: 1px solid rgba(120, 200, 255, 0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  }
+
+  .panel h2 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #7fd7ff;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(127, 215, 255, 0.25);
+    padding-bottom: 6px;
+  }
+
+  #status-panel {
+    top: 16px;
+    left: 16px;
+    width: 250px;
+    font-size: 13px;
+  }
+
+  #status-panel .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+
+  #status-panel .label { color: #9fb7c8; }
+  #status-panel .value { color: #baffc9; font-weight: bold; }
+  #status-panel .value.warn { color: #ffd479; }
+  #status-panel .value.stop { color: #ff8080; }
+
+  #controls-panel {
+    top: 16px;
+    right: 16px;
+    width: 230px;
+    font-size: 12px;
+  }
+
+  #controls-panel .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    color: #cfe3ee;
+  }
+
+  #controls-panel kbd {
+    background: rgba(127, 215, 255, 0.15);
+    border: 1px solid rgba(127, 215, 255, 0.4);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #7fd7ff;
+    font-family: inherit;
+    font-size: 11px;
+  }
+
+  #title-bar {
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    padding: 8px 22px;
+  }
+
+  #title-bar h1 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: #eaf6ff;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  #title-bar .subtitle {
+    font-size: 10px;
+    color: #7fd7ff;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  #keyframe-strip {
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 420px;
+    font-size: 11px;
+  }
+
+  #keyframe-strip .track {
+    position: relative;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    margin-top: 10px;
+  }
+
+  #keyframe-strip .dot {
+    position: absolute;
+    top: -5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #123;
+    border: 2px solid #7fd7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #7fd7ff;
+    transform: translateX(-50%);
+  }
+
+  #keyframe-strip .dot.active {
+    background: #7fd7ff;
+    color: #06222e;
+    box-shadow: 0 0 10px #7fd7ff;
+  }
+
+  #keyframe-strip .marker {
+    position: absolute;
+    top: -9px;
+    width: 10px;
+    height: 24px;
+    border-radius: 2px;
+    background: #ffd479;
+    transform: translateX(-50%);
+    transition: left 0.05s linear;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HUD OVERLAY ============ -->
+<div class="hud" id="title-bar">
+  <div class="panel">
+    <h1>Smart Metro Simulation System</h1>
+    <div class="subtitle">Operator Training Build &mdash; Keyframe Animation &amp; Interpolation Demo</div>
+  </div>
+</div>
+
+<div class="hud panel" id="status-panel">
+  <h2>Simulation Status</h2>
+  <div class="row"><span class="label">Speed</span><span class="value" id="hud-speed">--</span></div>
+  <div class="row"><span class="label">Movement Mode</span><span class="value" id="hud-mode">--</span></div>
+  <div class="row"><span class="label">Animation Status</span><span class="value" id="hud-status">--</span></div>
+  <div class="row"><span class="label">Direction</span><span class="value" id="hud-direction">--</span></div>
+  <div class="row"><span class="label">FPS</span><span class="value" id="hud-fps">--</span></div>
+  <div class="row"><span class="label">Current Keyframe</span><span class="value" id="hud-keyframe">--</span></div>
+  <div class="row"><span class="label">Signal</span><span class="value" id="hud-signal">--</span></div>
+  <div class="row"><span class="label">Barrier</span><span class="value" id="hud-barrier">--</span></div>
+</div>
+
+<div class="hud panel" id="controls-panel">
+  <h2>Keyboard Controls</h2>
+  <div class="row"><kbd>SPACE</kbd><span>Start / Pause</span></div>
+  <div class="row"><kbd>&uarr;</kbd><span>Increase Speed</span></div>
+  <div class="row"><kbd>&darr;</kbd><span>Decrease Speed</span></div>
+  <div class="row"><kbd>&larr;</kbd><span>Reverse Direction</span></div>
+  <div class="row"><kbd>&rarr;</kbd><span>Forward Direction</span></div>
+  <div class="row"><kbd>R</kbd><span>Reset Simulation</span></div>
+  <div class="row"><kbd>H</kbd><span>Toggle Helper Grid</span></div>
+  <div class="row"><kbd>1 2 3</kbd><span>Select Movement Mode</span></div>
+  <div class="row"><kbd>M</kbd><span>Cycle Movement Mode</span></div>
+</div>
+
+<div class="hud" id="keyframe-strip">
+  <div class="panel">
+    <h2>Track Keyframes (A &rarr; B &rarr; C)</h2>
+    <div class="track">
+      <div class="dot" id="dot-a" style="left:0%">A</div>
+      <div class="dot" id="dot-b" style="left:50%">B</div>
+      <div class="dot" id="dot-c" style="left:100%">C</div>
+      <div class="marker" id="train-marker" style="left:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ THREE.JS (classic global build, see comment in <head>) ============ -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+/* =========================================================================
+   SMART METRO SIMULATION SYSTEM
+   -------------------------------------------------------------------------
+   A single-file Three.js scene demonstrating:
+     - hierarchical transformation (Train Group -> Engine / Coaches / Wheels)
+     - keyframe animation between three track positions (A, B, C)
+     - three distinct movement/interpolation modes
+     - synchronized station machinery (barrier gate, signal, platform lamps)
+     - keyboard driven interactivity
+   Code is organized into small creation / update functions, as requested.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   1. GLOBAL STATE
+   ------------------------------------------------------------------ */
+let scene, camera, renderer, clock;
+
+// Train hierarchy references
+let trainGroup, engine, coach1, coach2, coach3, wheelsGroup;
+const wheelMeshes = [];
+
+// Station machinery references
+let platformGroup, barrierPivot, signalGroup;
+let redLightMesh, greenLightMesh;
+const platformLamps = []; // { mat, light }
+
+// Misc scene references
+let gridHelper;
+
+// Track keyframes (positions along the Z axis)
+const KEYFRAMES = { A: -40, B: 0, C: 40 };
+
+// Tunable constants
+const STATION_DWELL = 3;      // seconds the train waits at the platform
+const ENDPOINT_PAUSE = 1.0;   // seconds the train idles at the track ends
+const STOP_EPS = 0.08;        // snap-to-target distance
+const WHEEL_RADIUS = 0.5;
+const BARRIER_TRAVEL_TIME = 0.6; // seconds for the gate to swing fully open/closed
+const BASE_SPEED = { 1: 9, 2: 9, 3: 11 }; // units/sec at speedScale = 1
+const ACCEL = 6;  // mode 3 acceleration (units/sec^2)
+const DECEL = 7;  // mode 3 deceleration (units/sec^2)
+
+// Simulation state (single source of truth, read by every update function)
+const simState = {
+  running: false,          // SPACE toggles this
+  mode: 2,                 // 1 = linear, 2 = interpolated, 3 = variable speed
+  direction: 1,             // +1 = towards C, -1 = towards A
+  speedScale: 1,            // user adjustable multiplier (UP / DOWN)
+  currentSpeed: 0,          // current instantaneous speed, for HUD + mode 3 kinematics
+  z: KEYFRAMES.A,           // current train position along the track
+
+  halted: false,            // true while stopped at a station or track end
+  haltReason: null,         // 'station' | 'endpoint'
+  haltTimer: 0,
+
+  barrierTargetOpen: false, // true => gate should be swinging/staying open
+  barrierProgress: 0,       // 0 = closed .. 1 = open
+  signalRed: true,          // true = red (stop), false = green (proceed)
+  signalPulseTimer: 0,      // counts down the "green for departure" window
+  lampMix: 0                // 0 = idle lamp colour, 1 = boarding lamp colour
+};
+
+// FPS bookkeeping
+let fpsAccum = 0, fpsFrames = 0, fps = 60;
+
+/* ---------------------------------------------------------------------
+   2. SCENE / ENVIRONMENT CREATION
+   ------------------------------------------------------------------ */
+
+function createSkyTexture() {
+  // A tiny procedural vertical gradient used as the scene background,
+  // avoids loading any external image assets.
+  const canvas = document.createElement('canvas');
+  canvas.width = 2;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, '#6fb8ea');
+  grad.addColorStop(0.55, '#bfe3f7');
+  grad.addColorStop(1, '#eef8ff');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 2, 256);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function createScene() {
+  scene = new THREE.Scene();
+  scene.background = createSkyTexture();
+  scene.fog = new THREE.Fog(0xbfe3f7, 80, 240);
+  clock = new THREE.Clock();
+}
+
+function createGround() {
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x4c7a3d, roughness: 1 });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(260, 190), groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  gridHelper = new THREE.GridHelper(260, 65, 0xffffff, 0x99aabb);
+  gridHelper.position.y = 0.02;
+  gridHelper.visible = false;
+  scene.add(gridHelper);
+}
+
+function createTracks() {
+  const trackGroup = new THREE.Group();
+  trackGroup.name = 'Tracks';
+
+  const railMat = new THREE.MeshStandardMaterial({ color: 0x8a8e91, metalness: 0.7, roughness: 0.35 });
+  [-0.75, 0.75].forEach((x) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 124), railMat);
+    rail.position.set(x, 0.12, 0);
+    rail.castShadow = true;
+    rail.receiveShadow = true;
+    trackGroup.add(rail);
+  });
+
+  const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
+  for (let z = -60; z <= 60; z += 2) {
+    const sleeper = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.5), sleeperMat);
+    sleeper.position.set(0, 0.05, z);
+    sleeper.receiveShadow = true;
+    trackGroup.add(sleeper);
+  }
+
+  // Small flat markers at the two track extremities (A and C) so the
+  // keyframe endpoints are visible in the world, not just on the HUD.
+  const markerMat = new THREE.MeshStandardMaterial({ color: 0xffd479, emissive: 0x996b1a, emissiveIntensity: 0.4 });
+  [KEYFRAMES.A, KEYFRAMES.C].forEach((zPos) => {
+    const marker = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.2, 24), markerMat);
+    marker.rotation.x = -Math.PI / 2;
+    marker.position.set(0, 0.03, zPos);
+    trackGroup.add(marker);
+  });
+
+  scene.add(trackGroup);
+}
+
+function createStationBuilding() {
+  const g = new THREE.Group();
+  g.name = 'StationBuilding';
+
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xeceff1, roughness: 0.8 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x455a64, roughness: 0.6 });
+
+  const base = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 11), wallMat);
+  base.position.y = 2;
+  base.castShadow = true;
+  base.receiveShadow = true;
+  g.add(base);
+
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.4, 11.6), roofMat);
+  roof.position.y = 4.2;
+  roof.castShadow = true;
+  g.add(roof);
+
+  const signMat = new THREE.MeshStandardMaterial({ color: 0x1565c0, emissive: 0x0d47a1, emissiveIntensity: 0.35 });
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.8, 0.15), signMat);
+  sign.position.set(0, 3.2, -5.55);
+  g.add(sign);
+
+  const doorMat = new THREE.MeshStandardMaterial({ color: 0x263238 });
+  const door = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.2, 0.1), doorMat);
+  door.position.set(0, 1.1, -5.55);
+  g.add(door);
+
+  return g;
+}
+
+function createBarrier() {
+  // A boom-gate style barrier built from a pivot hierarchy: rotating the
+  // pivot Group swings the arm mesh (offset from the pivot) between the
+  // closed (horizontal, blocking) and open (vertical) positions.
+  barrierPivot = new THREE.Group();
+  barrierPivot.name = 'BarrierPivot';
+
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x424242 });
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.3, 0.25), postMat);
+  post.position.y = 0.65;
+  post.castShadow = true;
+  barrierPivot.add(post);
+
+  const armMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5 });
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.15, 0.15), armMat);
+  arm.position.set(1.8, 1.3, 0); // offset from the pivot origin -> swings when pivot rotates
+  arm.castShadow = true;
+  barrierPivot.add(arm);
+
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xd32f2f });
+  for (let i = 0; i < 4; i++) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.17, 0.17), stripeMat);
+    stripe.position.set(0.55 + i * 0.85, 1.3, 0);
+    barrierPivot.add(stripe);
+  }
+
+  // closed = arm horizontal (rotation.z = 0), open = arm swung upward
+  barrierPivot.rotation.z = 0;
+}
+
+function createPlatform() {
+  platformGroup = new THREE.Group();
+  platformGroup.name = 'PlatformGroup';
+
+  const slabMat = new THREE.MeshStandardMaterial({ color: 0x9e9e9e, roughness: 0.9 });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(6, 1, 26), slabMat);
+  slab.position.set(6.5, 0.5, 0);
+  slab.castShadow = true;
+  slab.receiveShadow = true;
+  platformGroup.add(slab);
+
+  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xffc107 });
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.02, 26), edgeMat);
+  edge.position.set(3.6, 0.5, 0);
+  platformGroup.add(edge);
+
+  // Canopy roof over the platform, supported on simple columns
+  const canopyMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.6 });
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.25, 24), canopyMat);
+  canopy.position.set(6.5, 4.2, 0);
+  canopy.castShadow = true;
+  platformGroup.add(canopy);
+
+  const colMat = new THREE.MeshStandardMaterial({ color: 0x546e7a });
+  for (let i = -2; i <= 2; i++) {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3.1, 8), colMat);
+    col.position.set(9.2, 2.55, i * 5);
+    col.castShadow = true;
+    platformGroup.add(col);
+  }
+
+  // Platform lamps: bulb material + point light stored for later colour animation
+  for (let i = -1; i <= 1; i++) {
+    const lampGroup = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.6, 8), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+    pole.position.y = 1.3;
+    lampGroup.add(pole);
+
+    const bulbMat = new THREE.MeshStandardMaterial({ color: 0x223344, emissive: 0x4488ff, emissiveIntensity: 0.4 });
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), bulbMat);
+    bulb.position.y = 2.7;
+    lampGroup.add(bulb);
+
+    const bulbLight = new THREE.PointLight(0x4488ff, 0.6, 9);
+    bulbLight.position.y = 2.7;
+    lampGroup.add(bulbLight);
+
+    lampGroup.position.set(8.7, 1, i * 8);
+    platformGroup.add(lampGroup);
+    platformLamps.push({ mat: bulbMat, light: bulbLight });
+  }
+
+  const building = createStationBuilding();
+  building.position.set(11.2, 0, 0);
+  platformGroup.add(building);
+
+  createBarrier();
+  barrierPivot.position.set(3.6, 1, 11.5);
+  platformGroup.add(barrierPivot);
+
+  scene.add(platformGroup);
+}
+
+function createSignal() {
+  // "Signal pole / traffic light" -- grouped pole + housing + red/green lamps.
+  signalGroup = new THREE.Group();
+  signalGroup.name = 'Signal';
+
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.5, roughness: 0.5 });
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 4.5, 10), poleMat);
+  pole.position.y = 2.25;
+  pole.castShadow = true;
+  signalGroup.add(pole);
+
+  const housing = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.5), new THREE.MeshStandardMaterial({ color: 0x212121 }));
+  housing.position.y = 4.6;
+  housing.castShadow = true;
+  signalGroup.add(housing);
+
+  const lightGeo = new THREE.SphereGeometry(0.22, 14, 14);
+
+  redLightMesh = new THREE.Mesh(lightGeo, new THREE.MeshStandardMaterial({ color: 0x330000, emissive: 0xff2020, emissiveIntensity: 1.2 }));
+  redLightMesh.position.set(0, 5.05, 0.3);
+  signalGroup.add(redLightMesh);
+
+  greenLightMesh = new THREE.Mesh(lightGeo, new THREE.MeshStandardMaterial({ color: 0x003300, emissive: 0x20ff40, emissiveIntensity: 0.08 }));
+  greenLightMesh.position.set(0, 4.15, 0.3);
+  signalGroup.add(greenLightMesh);
+
+  signalGroup.position.set(-6, 0, -16);
+  scene.add(signalGroup);
+}
+
+function createTree() {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 2, 8), new THREE.MeshStandardMaterial({ color: 0x6d4c31 }));
+  trunk.position.y = 1;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const leaves1 = new THREE.Mesh(new THREE.ConeGeometry(1.3, 2.6, 8), new THREE.MeshStandardMaterial({ color: 0x2e7d32 }));
+  leaves1.position.y = 3;
+  leaves1.castShadow = true;
+  g.add(leaves1);
+
+  const leaves2 = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.0, 8), new THREE.MeshStandardMaterial({ color: 0x388e3c }));
+  leaves2.position.y = 4.3;
+  leaves2.castShadow = true;
+  g.add(leaves2);
+
+  return g;
+}
+
+function createTrees() {
+  const positions = [
+    [-14, -34], [-16, -18], [-15, 8], [-14, 26], [-13, 44],
+    [16, -44], [19, -22], [21, 20], [18, 38], [-12, -48], [22, 2], [-18, 34]
+  ];
+  positions.forEach(([x, z]) => {
+    const tree = createTree();
+    const s = 0.75 + Math.random() * 0.6;
+    tree.scale.set(s, s, s);
+    tree.position.set(x, 0, z);
+    scene.add(tree);
+  });
+}
+
+function createLighting() {
+  const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+  scene.add(ambient);
+
+  const hemi = new THREE.HemisphereLight(0xbfe3f7, 0x4c7a3d, 0.35);
+  scene.add(hemi);
+
+  const sun = new THREE.DirectionalLight(0xfff4e0, 1.15);
+  sun.position.set(45, 60, 25);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -80;
+  sun.shadow.camera.right = 80;
+  sun.shadow.camera.top = 80;
+  sun.shadow.camera.bottom = -80;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 220;
+  sun.shadow.bias = -0.0006;
+  scene.add(sun);
+  scene.add(sun.target);
+}
+
+function setupCamera() {
+  camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 500);
+  camera.position.set(34, 24, 50);
+  camera.lookAt(0, 3, 0);
+}
+
+function createRenderer() {
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  document.body.appendChild(renderer.domElement);
+}
+
+/* ---------------------------------------------------------------------
+   3. TRAIN HIERARCHY
+   Train Group -> Engine, Coach1, Coach2, Coach3, Wheels
+   ------------------------------------------------------------------ */
+
+function buildCar(length, width, height, material, stripeMat, windowMat, withNose) {
+  const car = new THREE.Group();
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(width, height, length), material);
+  body.position.y = height / 2 + 0.4;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  car.add(body);
+
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(width + 0.02, 0.3, length - 0.2), stripeMat);
+  stripe.position.y = body.position.y - height / 2 + 0.5;
+  car.add(stripe);
+
+  const win = new THREE.Mesh(new THREE.BoxGeometry(width + 0.02, height * 0.35, length - 1.2), windowMat);
+  win.position.y = body.position.y + height * 0.15;
+  car.add(win);
+
+  if (withNose) {
+    const noseGeo = new THREE.ConeGeometry(width * 0.45, 0.9, 4);
+    const noseFront = new THREE.Mesh(noseGeo, material);
+    noseFront.rotation.x = Math.PI / 2;
+    noseFront.position.set(0, body.position.y, length / 2 + 0.4);
+    noseFront.castShadow = true;
+    car.add(noseFront);
+
+    const noseBack = new THREE.Mesh(noseGeo, material);
+    noseBack.rotation.x = -Math.PI / 2;
+    noseBack.position.set(0, body.position.y, -(length / 2 + 0.4));
+    noseBack.castShadow = true;
+    car.add(noseBack);
+  }
+
+  return car;
+}
+
+function createTrain() {
+  trainGroup = new THREE.Group();
+  trainGroup.name = 'TrainGroup';
+
+  const bodyMatEngine = new THREE.MeshStandardMaterial({ color: 0x1e88e5, metalness: 0.3, roughness: 0.4 });
+  const bodyMatCoach = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, metalness: 0.2, roughness: 0.5 });
+  const stripeMat = new THREE.MeshStandardMaterial({ color: 0xffb300, metalness: 0.1, roughness: 0.6 });
+  const windowMat = new THREE.MeshStandardMaterial({ color: 0x203040, metalness: 0.6, roughness: 0.2, emissive: 0x0a1a2a });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x212121, metalness: 0.6, roughness: 0.4 });
+
+  const carZs = [9.5, 3.2, -3.1, -9.4];
+
+  engine = buildCar(5.5, 2.6, 3.0, bodyMatEngine, stripeMat, windowMat, true);
+  engine.position.z = carZs[0];
+  trainGroup.add(engine);
+
+  coach1 = buildCar(5.5, 2.6, 2.8, bodyMatCoach, stripeMat, windowMat, false);
+  coach1.position.z = carZs[1];
+  trainGroup.add(coach1);
+
+  coach2 = buildCar(5.5, 2.6, 2.8, bodyMatCoach, stripeMat, windowMat, false);
+  coach2.position.z = carZs[2];
+  trainGroup.add(coach2);
+
+  coach3 = buildCar(5.5, 2.6, 2.8, bodyMatCoach, stripeMat, windowMat, false);
+  coach3.position.z = carZs[3];
+  trainGroup.add(coach3);
+
+  // Wheels: a dedicated branch of the hierarchy, aligned under each car.
+  wheelsGroup = new THREE.Group();
+  wheelsGroup.name = 'Wheels';
+  const wheelGeo = new THREE.CylinderGeometry(WHEEL_RADIUS, WHEEL_RADIUS, 0.35, 16);
+  wheelGeo.rotateZ(Math.PI / 2); // bake the spin axis onto local X so rotation.x alone rolls the wheel
+
+  carZs.forEach((cz) => {
+    [cz - 1.8, cz + 1.8].forEach((axleZ) => {
+      [-1.15, 1.15].forEach((sideX) => {
+        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+        wheel.position.set(sideX, WHEEL_RADIUS, axleZ);
+        wheel.castShadow = true;
+        wheelsGroup.add(wheel);
+        wheelMeshes.push(wheel);
+      });
+    });
+  });
+  trainGroup.add(wheelsGroup);
+
+  trainGroup.position.set(0, 0, KEYFRAMES.A);
+  scene.add(trainGroup);
+}
+
+/* ---------------------------------------------------------------------
+   4. SIGNAL / BARRIER / LAMP VISUAL HELPERS
+   ------------------------------------------------------------------ */
+
+function setSignalVisual(isRed) {
+  redLightMesh.material.emissiveIntensity = isRed ? 1.2 : 0.08;
+  greenLightMesh.material.emissiveIntensity = isRed ? 0.08 : 1.2;
+}
+
+const IDLE_LAMP_COLOR = new THREE.Color(0x4488ff);
+const BOARD_LAMP_COLOR = new THREE.Color(0xffc107);
+const _lampColorScratch = new THREE.Color();
+
+function applyLampColor(mix) {
+  _lampColorScratch.copy(IDLE_LAMP_COLOR).lerp(BOARD_LAMP_COLOR, mix);
+  platformLamps.forEach((l) => {
+    l.mat.emissive.copy(_lampColorScratch);
+    l.mat.emissiveIntensity = 0.4 + mix * 0.9;
+    l.light.color.copy(_lampColorScratch);
+    l.light.intensity = 0.6 + mix * 1.3;
+  });
+}
+
+/* ---------------------------------------------------------------------
+   5. KEYFRAME / MOVEMENT LOGIC (Task 1 + Task 2)
+   ------------------------------------------------------------------ */
+
+// Determines which keyframe the train is currently travelling towards,
+// based on its current position and direction. This makes the system
+// robust to the user reversing direction mid-transit (LEFT / RIGHT keys).
+function getNextTargetZ() {
+  const z = simState.z;
+  if (simState.direction === 1) {
+    return z < KEYFRAMES.B - STOP_EPS ? KEYFRAMES.B : KEYFRAMES.C;
+  }
+  return z > KEYFRAMES.B + STOP_EPS ? KEYFRAMES.B : KEYFRAMES.A;
+}
+
+function beginHalt(reason, duration) {
+  simState.halted = true;
+  simState.haltReason = reason;
+  simState.haltTimer = duration;
+  simState.currentSpeed = 0;
+  if (reason === 'station') {
+    simState.barrierTargetOpen = true; // platform response begins immediately
+  }
+}
+
+function spinWheels(deltaZ) {
+  if (deltaZ === 0) return;
+  const rot = deltaZ / WHEEL_RADIUS;
+  wheelMeshes.forEach((w) => { w.rotation.x += rot; });
+}
+
+// Mode 1: Linear movement -- direct, constant-speed position updates.
+function stepLinear(prevZ, targetZ, dt) {
+  const speed = BASE_SPEED[1] * simState.speedScale;
+  const dirSign = Math.sign(targetZ - prevZ) || simState.direction;
+  let newZ = prevZ + dirSign * speed * dt;
+  if ((dirSign > 0 && newZ >= targetZ) || (dirSign < 0 && newZ <= targetZ)) newZ = targetZ;
+  simState.currentSpeed = speed;
+  return newZ;
+}
+
+// Mode 2: Interpolated movement -- THREE.Vector3.lerp() eases the train
+// toward the target keyframe every frame (frame-rate independent via a
+// time-based alpha), producing visibly smoother accel/decel than Mode 1.
+const _curVec = new THREE.Vector3();
+const _targetVec = new THREE.Vector3();
+function stepInterpolated(prevZ, targetZ, dt) {
+  _curVec.set(0, 0, prevZ);
+  _targetVec.set(0, 0, targetZ);
+  const k = 1.6 * simState.speedScale; // convergence rate
+  const alpha = 1 - Math.exp(-k * dt);
+  _curVec.lerp(_targetVec, alpha);
+  let newZ = _curVec.z;
+  if (Math.abs(targetZ - newZ) < STOP_EPS) newZ = targetZ;
+  simState.currentSpeed = Math.abs(newZ - prevZ) / Math.max(dt, 1e-6);
+  return newZ;
+}
+
+// Mode 3: Variable speed -- explicit acceleration / deceleration kinematics
+// integrated with THREE.Clock's deltaTime, giving a proper trapezoidal
+// accelerate -> cruise -> decelerate speed profile.
+function stepVariableSpeed(prevZ, targetZ, dt) {
+  const maxSpeed = BASE_SPEED[3] * simState.speedScale;
+  const distToTarget = Math.abs(targetZ - prevZ);
+  const stoppingDist = (simState.currentSpeed * simState.currentSpeed) / (2 * DECEL);
+
+  if (distToTarget <= stoppingDist + 0.05) {
+    simState.currentSpeed = Math.max(0, simState.currentSpeed - DECEL * dt);
+  } else if (simState.currentSpeed < maxSpeed) {
+    simState.currentSpeed = Math.min(maxSpeed, simState.currentSpeed + ACCEL * dt);
+  }
+
+  const dirSign = Math.sign(targetZ - prevZ) || simState.direction;
+  let newZ = prevZ + dirSign * simState.currentSpeed * dt;
+  if ((dirSign > 0 && newZ >= targetZ) || (dirSign < 0 && newZ <= targetZ)) newZ = targetZ;
+  if (Math.abs(newZ - targetZ) < STOP_EPS) newZ = targetZ;
+  return newZ;
+}
+
+function animateTrain(dt) {
+  if (!simState.running) return;
+
+  if (simState.halted) {
+    simState.haltTimer -= dt;
+    if (simState.haltTimer <= 0) {
+      const wasStation = simState.haltReason === 'station';
+      simState.halted = false;
+      simState.haltReason = null;
+      if (wasStation) simState.signalPulseTimer = 2.0; // green light for departure
+    }
+    return;
+  }
+
+  const targetZ = getNextTargetZ();
+  const prevZ = simState.z;
+  let newZ;
+
+  if (simState.mode === 1) newZ = stepLinear(prevZ, targetZ, dt);
+  else if (simState.mode === 2) newZ = stepInterpolated(prevZ, targetZ, dt);
+  else newZ = stepVariableSpeed(prevZ, targetZ, dt);
+
+  simState.z = newZ;
+  trainGroup.position.z = newZ;
+  spinWheels(newZ - prevZ);
+
+  if (newZ === targetZ) {
+    if (targetZ === KEYFRAMES.B) {
+      beginHalt('station', STATION_DWELL);
+    } else {
+      simState.direction *= -1; // reached a track end -> reverse and loop forever
+      beginHalt('endpoint', ENDPOINT_PAUSE);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------
+   6. PLATFORM RESPONSE (barrier + signal + lamps, synchronized)
+   ------------------------------------------------------------------ */
+
+function updatePlatform(dt) {
+  if (!simState.running) return;
+
+  const atStationHalt = simState.halted && simState.haltReason === 'station';
+
+  // Close the gate a little before the dwell ends so it's shut by departure.
+  if (atStationHalt) {
+    if (simState.haltTimer <= BARRIER_TRAVEL_TIME + 0.1 && simState.barrierTargetOpen) {
+      simState.barrierTargetOpen = false;
+    }
+  } else if (!simState.halted) {
+    simState.barrierTargetOpen = false;
+  }
+
+  const dir = simState.barrierTargetOpen ? 1 : -1;
+  simState.barrierProgress = THREE.MathUtils.clamp(
+    simState.barrierProgress + (dir * dt) / BARRIER_TRAVEL_TIME, 0, 1
+  );
+  barrierPivot.rotation.z = -simState.barrierProgress * (Math.PI / 2) * 0.85;
+
+  // Platform lamps warm up while boarding is in progress.
+  const lampTarget = atStationHalt ? 1 : 0;
+  simState.lampMix = THREE.MathUtils.lerp(simState.lampMix, lampTarget, 1 - Math.exp(-4 * dt));
+  applyLampColor(simState.lampMix);
+
+  // Signal: red while occupied/stopped, green pulse on departure, red again.
+  if (atStationHalt) {
+    simState.signalRed = true;
+    simState.signalPulseTimer = 0;
+  } else if (simState.signalPulseTimer > 0) {
+    simState.signalRed = false;
+    simState.signalPulseTimer -= dt;
+    if (simState.signalPulseTimer <= 0) simState.signalRed = true;
+  } else {
+    simState.signalRed = true;
+  }
+  setSignalVisual(simState.signalRed);
+}
+
+/* ---------------------------------------------------------------------
+   7. CAMERA
+   ------------------------------------------------------------------ */
+
+const _camDesired = new THREE.Vector3();
+const _lookTarget = new THREE.Vector3();
+
+function updateCamera(dt, elapsed) {
+  const followZ = THREE.MathUtils.clamp(simState.z, -32, 32);
+  const orbitDrift = Math.sin(elapsed * 0.05) * 4;
+  _camDesired.set(32 + orbitDrift, 23, followZ + 46);
+  camera.position.lerp(_camDesired, 1 - Math.exp(-1.1 * dt));
+
+  _lookTarget.set(0, 3, THREE.MathUtils.lerp(0, simState.z, 0.45));
+  camera.lookAt(_lookTarget);
+}
+
+/* ---------------------------------------------------------------------
+   8. USER INTERACTION (Task 3)
+   ------------------------------------------------------------------ */
+
+function resetSimulation() {
+  simState.running = false;
+  simState.direction = 1;
+  simState.speedScale = 1;
+  simState.currentSpeed = 0;
+  simState.z = KEYFRAMES.A;
+  simState.halted = false;
+  simState.haltReason = null;
+  simState.haltTimer = 0;
+  simState.barrierTargetOpen = false;
+  simState.barrierProgress = 0;
+  simState.signalRed = true;
+  simState.signalPulseTimer = 0;
+  simState.lampMix = 0;
+
+  trainGroup.position.z = KEYFRAMES.A;
+  barrierPivot.rotation.z = 0;
+  setSignalVisual(true);
+  applyLampColor(0);
+}
+
+function handleInput() {
+  window.addEventListener('keydown', (e) => {
+    switch (e.code) {
+      case 'Space':
+        e.preventDefault();
+        simState.running = !simState.running;
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        simState.speedScale = Math.min(3, +(simState.speedScale + 0.25).toFixed(2));
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        simState.speedScale = Math.max(0.25, +(simState.speedScale - 0.25).toFixed(2));
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        simState.direction = -1;
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        simState.direction = 1;
+        break;
+      case 'KeyR':
+        resetSimulation();
+        break;
+      case 'KeyH':
+        gridHelper.visible = !gridHelper.visible;
+        break;
+      case 'Digit1':
+        simState.mode = 1;
+        break;
+      case 'Digit2':
+        simState.mode = 2;
+        break;
+      case 'Digit3':
+        simState.mode = 3;
+        break;
+      case 'KeyM':
+        simState.mode = (simState.mode % 3) + 1;
+        break;
+    }
+  });
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/* ---------------------------------------------------------------------
+   9. HUD
+   ------------------------------------------------------------------ */
+
+const MODE_NAMES = {
+  1: 'Mode 1: Linear',
+  2: 'Mode 2: Interpolated (lerp)',
+  3: 'Mode 3: Variable Speed'
+};
+
+function nearestKeyframeLabel() {
+  const z = simState.z;
+  if (Math.abs(z - KEYFRAMES.A) < 0.4) return 'A (Track Start)';
+  if (Math.abs(z - KEYFRAMES.B) < 0.4) return 'B (Station)';
+  if (Math.abs(z - KEYFRAMES.C) < 0.4) return 'C (Track End)';
+  return z < KEYFRAMES.B ? 'Between A ↔ B' : 'Between B ↔ C';
+}
+
+const hud = {
+  speed: document.getElementById('hud-speed'),
+  mode: document.getElementById('hud-mode'),
+  status: document.getElementById('hud-status'),
+  direction: document.getElementById('hud-direction'),
+  fps: document.getElementById('hud-fps'),
+  keyframe: document.getElementById('hud-keyframe'),
+  signal: document.getElementById('hud-signal'),
+  barrier: document.getElementById('hud-barrier'),
+  dotA: document.getElementById('dot-a'),
+  dotB: document.getElementById('dot-b'),
+  dotC: document.getElementById('dot-c'),
+  trainMarker: document.getElementById('train-marker')
+};
+
+function updateHUD(dt) {
+  fpsAccum += dt;
+  fpsFrames++;
+  if (fpsAccum >= 0.5) {
+    fps = Math.round(fpsFrames / fpsAccum);
+    fpsAccum = 0;
+    fpsFrames = 0;
+  }
+
+  const statusText = !simState.running
+    ? 'PAUSED'
+    : simState.halted
+      ? (simState.haltReason === 'station' ? 'STOPPED AT STATION' : 'TURNAROUND')
+      : 'RUNNING';
+
+  hud.speed.textContent = simState.currentSpeed.toFixed(1) + ' u/s  (x' + simState.speedScale.toFixed(2) + ')';
+  hud.mode.textContent = MODE_NAMES[simState.mode];
+  hud.status.textContent = statusText;
+  hud.status.className = 'value' + (statusText === 'STOPPED AT STATION' ? ' stop' : statusText === 'RUNNING' ? '' : ' warn');
+  hud.direction.textContent = simState.direction === 1 ? 'Forward (A → C)' : 'Reverse (C → A)';
+  hud.fps.textContent = fps;
+  hud.keyframe.textContent = nearestKeyframeLabel();
+  hud.signal.textContent = simState.signalRed ? 'RED (Stop)' : 'GREEN (Proceed)';
+  hud.signal.className = 'value' + (simState.signalRed ? ' stop' : '');
+  hud.barrier.textContent = simState.barrierProgress > 0.95 ? 'OPEN' : simState.barrierProgress < 0.05 ? 'CLOSED' : 'MOVING';
+
+  // Keyframe progress strip
+  const pct = THREE.MathUtils.clamp(((simState.z - KEYFRAMES.A) / (KEYFRAMES.C - KEYFRAMES.A)) * 100, 0, 100);
+  hud.trainMarker.style.left = pct + '%';
+  hud.dotA.classList.toggle('active', Math.abs(simState.z - KEYFRAMES.A) < 0.4);
+  hud.dotB.classList.toggle('active', Math.abs(simState.z - KEYFRAMES.B) < 0.4);
+  hud.dotC.classList.toggle('active', Math.abs(simState.z - KEYFRAMES.C) < 0.4);
+}
+
+/* ---------------------------------------------------------------------
+   10. RENDER LOOP
+   ------------------------------------------------------------------ */
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid jumps after tab-switch
+  const elapsed = clock.elapsedTime;
+
+  animateTrain(dt);
+  updatePlatform(dt);
+  updateCamera(dt, elapsed);
+  updateHUD(dt);
+
+  renderer.render(scene, camera);
+}
+
+/* ---------------------------------------------------------------------
+   11. INIT
+   ------------------------------------------------------------------ */
+
+function init() {
+  createScene();
+  createGround();
+  createTracks();
+  createPlatform();
+  createTrain();
+  createSignal();
+  createTrees();
+  createLighting();
+  setupCamera();
+  createRenderer();
+  handleInput();
+
+  setSignalVisual(true);
+  applyLampColor(0);
+
+  animate();
+}
+
+init();
+</script>
+</body>
+</html>
